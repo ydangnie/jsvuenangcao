@@ -1,20 +1,31 @@
 const express = require('express');
 const mysql = require('mysql2');
 const NodeCache = require('node-cache');
-const multer = require('multer'); // 1. THÊM MULTER
+const multer = require('multer');
 
 const app = express();
 const port = 8080;
 
 const myCache = new NodeCache({ stdTTL: 600 });
 
+// =================================================================
+// FIX 1: THÊM MIDDLEWARE ĐỂ PHÂN TÍCH BODY CỦA REQUEST
+// =================================================================
+// Hỗ trợ parse JSON body (thường dùng trong các API request)
+app.use(express.json());
+// Hỗ trợ parse URL-encoded body (thường dùng trong form submissions)
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static('public'));
 
+// =================================================================
+// FIX 2 (KHUYẾN NGHỊ): SỬ DỤNG BIẾN MÔI TRƯỜNG CHO THÔNG TIN NHẠY CẢM
+// =================================================================
+// KHUYẾN NGHỊ: Thay vì hardcode, bạn nên dùng process.env.DB_USER, process.env.DB_PASSWORD
 const con = mysql.createConnection({
     host: "localhost",
-    user: "root",
-    password: "upredator",
+    user: "root", // Vui lòng thay thế bằng process.env.DB_USER
+    password: "upredator", // Vui lòng thay thế bằng process.env.DB_PASSWORD
     database: "testjscoban"
 });
 

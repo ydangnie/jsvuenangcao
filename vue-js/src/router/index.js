@@ -10,6 +10,11 @@ const router = createRouter({
             name: 'home',
             component: HomeView, // Trang danh sách sản phẩm
         },
+        // FIX: Thêm một route để xử lý yêu cầu "/home" bằng cách redirect về "/"
+        {
+            path: '/home',
+            redirect: '/'
+        },
         {
             path: '/san-pham/:id',
             name: 'chi-tiet-san-pham',

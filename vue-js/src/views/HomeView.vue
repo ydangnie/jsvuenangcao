@@ -236,7 +236,7 @@ export default {
   }
 };
 </script>
-<style scoped>
+<style src="../assets/app.css" scoped>
 /* ======================== CHUNG (Giảm padding/margin) ======================== */
 .app-container {
   max-width: 1200px;
