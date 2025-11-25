@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Log dữ liệu Titanic</title>
+</head>
+
+<body>
+    <h1>Dữ liệu hành khách Titanic</h1>
+    <div id="output"></div>
+
+    <script>
+        fetch('/query')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // 👉 Log ra console trình duyệt
+
+                // 👉 Hiển thị lên trang
+                const output = document.getElementById('output');
+                data.forEach(passenger => {
+                    const p = document.createElement('p');
+                    p.textContent = `ID: ${passenger.idpassenger}, Age: ${passenger.age}, Sex: ${passenger.sex}`;
+                    output.appendChild(p);
+                });
+            })
+            .catch(error => console.error('Lỗi khi lấy dữ liệu:', error));
+    </script>
+</body>
+
+</html>

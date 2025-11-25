@@ -1,0 +1,1 @@
+console.log('đây là file tintuc.js');

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 4 - JavaScript Nâng Cao</title>
+    <style>
+        /* PHẦN CSS: Trang trí giao diện cho dễ nhìn */
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .exercise-box {
+            border: 2px solid #333;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        
+        h2 {
+            color: #d32f2f;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        /* CSS cho Bài 1 */
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        .input-group label {
+            display: inline-block;
+            width: 100px;
+            font-weight: bold;
+        }
+        /* CSS cho Bài 2 */
+        
+        #colorBox {
+            width: 100px;
+            height: 100px;
+            background-color: #009688;
+            /* Màu mặc định */
+            margin-top: 10px;
+            border: 1px solid #000;
+            transition: background-color 0.5s;
+            /* Hiệu ứng chuyển màu mượt */
+        }
+        /* CSS cho Bài 3 */
+        
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>LAB 4: LẬP TRÌNH JAVASCRIPT NÂNG CAO</h1>
+
+    <div class="exercise-box">
+        <h2>Bài 1: Tính chỉ số BMI</h2>
+        <p>Nhập chiều cao (cm) và cân nặng (kg) để tính toán[cite: 11].</p>
+
+        <div class="input-group">
+            <label>Cân nặng:</label>
+            <input type="number" id="weight" placeholder="Nhập kg (vd: 60)">
+        </div>
+        <div class="input-group">
+            <label>Chiều cao:</label>
+            <input type="number" id="height" placeholder="Nhập cm (vd: 170)">
+        </div>
+        <button onclick="tinhBMI()">Tính BMI</button>
+
+        <h3 id="bmiResult">Chỉ số BMI của bạn là: ...</h3>
+    </div>
+
+    <div class="exercise-box">
+        <h2>Bài 2: Đổi màu (Callback/Async)</h2>
+        <p>Nhấn nút bên dưới, ô vuông sẽ đổi màu sau 1 giây.</p>
+
+        <button onclick="doiMauSau1Giay()">Change color</button>
+        <div id="colorBox"></div>
+    </div>
+
+    <div class="exercise-box">
+        <h2>Bài 3: Sắp xếp danh sách sinh viên</h2>
+        <p>Nhập tên và thêm vào danh sách, sau đó nhấn Sắp xếp[cite: 25].</p>
+
+        <div class="input-group">
+            <input type="text" id="studentName" placeholder="Nhập tên sinh viên...">
+            <button onclick="themSinhVien()">Thêm</button>
+            <button onclick="sapXepDanhSach()" style="background-color: #28a745;">Sắp xếp ABC</button>
+        </div>
+
+        <h3>Danh sách sinh viên:</h3>
+        <ul id="studentList">
+        </ul>
+    </div>
+
+    <script>
+        /* ==========================================
+                   PHẦN JAVASCRIPT: XỬ LÝ LOGIC
+                   ========================================== */
+
+        // --- BÀI 1: TÍNH BMI [cite: 6, 11, 12] ---
+        function tinhBMI() {
+            // 1. Lấy giá trị từ ô nhập liệu
+            let canNang = parseFloat(document.getElementById('weight').value);
+            let chieuCao = parseFloat(document.getElementById('height').value);
+
+            // 2. Kiểm tra xem người dùng đã nhập đúng chưa
+            if (!canNang || !chieuCao) {
+                alert("Vui lòng nhập đầy đủ cân nặng và chiều cao!");
+                return;
+            }
+
+            // 3. Tính toán: BMI = Cân nặng (kg) / Bình phương chiều cao
+            // Lưu ý: Đề bài ghi chiều cao (cm), nên cần đổi ra mét (chia 100) 
+            // để ra chỉ số BMI chuẩn quốc tế.
+            let chieuCaoMet = chieuCao / 100;
+            let bmi = canNang / (chieuCaoMet * chieuCaoMet);
+
+            // 4. Hiển thị kết quả (làm tròn 2 chữ số thập phân)
+            document.getElementById('bmiResult').innerText =
+                "Chỉ số BMI của bạn là: " + bmi.toFixed(2);
+        }
+
+
+        // --- BÀI 2: ĐỔI MÀU SAU 1 GIÂY [cite: 13, 15, 16] ---
+
+        // Hàm tạo màu ngẫu nhiên (Code đề bài cho sẵn) [cite: 16, 17]
+        function randomColor() {
+            return '#' + Math.floor(Math.random() * 16777215).toString(16);
+        }
+
+        function doiMauSau1Giay() {
+            // Sử dụng setTimeout để tạo độ trễ 1000ms (1 giây) - Đây là kiến thức bất đồng bộ/callback
+            setTimeout(function() {
+                let box = document.getElementById('colorBox');
+                let mauMoi = randomColor();
+                box.style.backgroundColor = mauMoi;
+                console.log("Đã đổi sang màu: " + mauMoi);
+            }, 1000);
+        }
+
+
+        // --- BÀI 3: QUẢN LÝ & SẮP XẾP DANH SÁCH [cite: 21, 25] ---
+
+        // Mảng chứa danh sách tên sinh viên
+        let danhSachSV = [];
+
+        // Hàm vẽ lại danh sách ra màn hình HTML
+        function hienThiDanhSach() {
+            let ul = document.getElementById('studentList');
+            ul.innerHTML = ""; // Xóa danh sách cũ
+
+            // Duyệt qua mảng và tạo thẻ <li> cho từng tên
+            for (let i = 0; i < danhSachSV.length; i++) {
+                let li = document.createElement("li");
+                li.innerText = danhSachSV[i];
+                ul.appendChild(li);
+            }
+        }
+
+        // Hàm thêm sinh viên
+        function themSinhVien() {
+            let inputTen = document.getElementById('studentName');
+            let ten = inputTen.value.trim();
+
+            if (ten !== "") {
+                danhSachSV.push(ten); // Thêm vào mảng
+                hienThiDanhSach(); // Cập nhật giao diện
+                inputTen.value = ""; // Xóa ô nhập
+                inputTen.focus();
+            } else {
+                alert("Vui lòng nhập tên!");
+            }
+        }
+
+        // Hàm sắp xếp danh sách theo Alphabet
+        function sapXepDanhSach() {
+            // Sử dụng hàm sort() của mảng
+            // localeCompare('vi') giúp sắp xếp tiếng Việt chính xác hơn
+            danhSachSV.sort(function(a, b) {
+                return a.localeCompare(b, 'vi');
+            });
+
+            hienThiDanhSach(); // Cập nhật lại giao diện sau khi sắp xếp
+        }
+
+        // Khởi tạo một vài dữ liệu mẫu (như trong đề bài: An, Hải, Toàn...) [cite: 27, 28, 29]
+        danhSachSV = ["Hải", "An", "Toàn", "Khánh"];
+        hienThiDanhSach();
+    </script>
+</body>
+
+</html>
