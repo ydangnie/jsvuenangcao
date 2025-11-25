@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
-const NodeCache = require('node-cache'); // Thêm node-cache
+const NodeCache = require('node-cache');
+const multer = require('multer'); // 1. THÊM MULTER
 
 const app = express();
 const port = 8080;
@@ -25,13 +26,69 @@ con.connect(function(err) {
     console.log("Connected to MySQL!");
 });
 
+// =================================================================
+// 2. CẤU HÌNH MULTER CHO UPLOAD ẢNH
+// =================================================================
+
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        // Lưu file vào thư mục public/uploads/
+        cb(null, 'public/uploads/');
+    },
+    filename: function(req, file, cb) {
+        // Đổi tên file thành timestamp + tên gốc (để tránh trùng lặp)
+        // Ví dụ: 1638072000000-tenanh.jpg
+        cb(null, Date.now() + '-' + file.originalname.trim());
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1024 * 1024 * 5 }, // Giới hạn 5MB
+    fileFilter: function(req, file, cb) {
+        // Kiểm tra loại file (chỉ cho phép file ảnh)
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+            return cb(new Error('Chỉ cho phép file ảnh (jpg, jpeg, png, gif, webp)!'), false);
+        }
+        cb(null, true);
+    }
+});
+
+
+// =================================================================
+// 3. ROUTE XỬ LÝ UPLOAD ẢNH MỚI
+// =================================================================
+
+/**
+ * Endpoint này nhận một file ảnh và lưu nó vào thư mục public/uploads.
+ * Tên trường trong form phải là 'productImage'.
+ */
+app.post('/upload-image', upload.single('productImage'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'Không tìm thấy file ảnh.' });
+    }
+
+    // Đường dẫn URL của ảnh (từ góc /pubic/)
+    const imageUrl = `/uploads/${req.file.filename}`;
+
+    // Trả về đường dẫn ảnh để client lưu vào database hoặc hiển thị
+    res.json({
+        success: true,
+        message: 'Upload ảnh thành công!',
+        imageUrl: imageUrl,
+        fileName: req.file.filename
+    });
+});
+
+// =================================================================
+// Các route cũ không thay đổi
+// =================================================================
+
 app.get('/', (req, res) => {
     res.send('Hello World from Express!');
 });
 
 app.get('/chitiet', (req, res) => {
-
-
     res.redirect('/chitiet.html');
 });
 
@@ -54,6 +111,11 @@ app.get('/home', (req, res) => {
             console.error("Lỗi truy vấn database:", err);
             return res.status(500).send("Có lỗi xảy ra khi truy vấn dữ liệu.");
         }
+
+        // Trong trường hợp sản phẩm có ảnh thật (ví dụ: 'public/uploads/1638072000000-tenanh.jpg'), 
+        // bạn sẽ cần có một cột `hinhAnh` trong database. 
+        // Sau đó thay đổi query để lấy cột đó và trả về:
+        // con.query("SELECT idsanpham, ao, quan, diachi, sdt, hinhAnh FROM sanpham", ...
 
         myCache.set(cacheKey, result);
 

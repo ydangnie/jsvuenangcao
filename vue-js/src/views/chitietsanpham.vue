@@ -39,7 +39,8 @@ function taoDuLieuMau(count) {
             quan: `Quần jean ${i}`,
             diachi: `Địa chỉ ${i}, Quận ${(i % 10) + 1}, TP.HCM`,
             sdt: `0123.456.${String(i).padStart(3, '0')}`,
-            hinhAnh: `https://picsum.photos/300/200?random=${i}`,
+            // Giả lập: Nếu bạn cập nhật DB với URL ảnh thực tế, bạn phải thay thế logic này
+            hinhAnh: `https://picsum.photos/300/200?random=${i}`, 
             moTaChiTiet: `Sản phẩm chất lượng cao, với mã SKU độc quyền: SPU${String(i).padStart(4, '0')}. Được làm từ 100% Cotton tự nhiên, mang lại cảm giác thoáng mát và thoải mái. Thích hợp cho cả dạo phố và đi làm. Bảo hành 12 tháng.`
         });
     }
