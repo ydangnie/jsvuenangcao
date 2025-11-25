@@ -1,0 +1,326 @@
+/* GENERAL STYLES */
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #eef2f5;
+    /* Light background for the app container */
+    min-height: 100vh;
+}
+
+
+/* HEADER */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd;
+}
+
+h1 {
+    color: #1a237e;
+    /* Deep Indigo for main title */
+    margin: 0;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+.add-button {
+    background-color: #4caf50;
+    /* Green for Create button */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-button:hover {
+    background-color: #388e3c;
+    transform: translateY(-2px);
+}
+
+
+/* LOADING & EMPTY STATE */
+
+.loading,
+.empty-state {
+    text-align: center;
+    font-size: 1.5em;
+    color: #757575;
+    padding: 50px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ITEM LIST */
+
+.item-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.item-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    border-left: 5px solid #2196f3;
+    /* Blue accent */
+}
+
+.item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.item-info h3 {
+    margin-top: 0;
+    color: #2196f3;
+    /* Blue for product title */
+    font-size: 1.5em;
+    border-bottom: 2px dashed #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.item-info p {
+    margin: 6px 0;
+    line-height: 1.4;
+    color: #424242;
+}
+
+.item-info strong {
+    color: #212121;
+}
+
+.item-info hr {
+    border: 0;
+    border-top: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+
+/* ACTIONS */
+
+.item-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.action-button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    flex-grow: 1;
+}
+
+.edit-button {
+    background-color: #ff9800;
+    /* Amber for Edit */
+    color: white;
+}
+
+.edit-button:hover {
+    background-color: #f57c00;
+}
+
+.delete-button {
+    background-color: #f44336;
+    /* Red for Delete */
+    color: white;
+}
+
+.delete-button:hover {
+    background-color: #d32f2f;
+}
+
+
+/* PAGINATION */
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.pagination {
+    display: flex;
+    padding: 0;
+    list-style: none;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page-item {
+    margin: 0;
+    border-right: 1px solid #eee;
+}
+
+.page-item:last-child {
+    border-right: none;
+}
+
+.page-link {
+    display: block;
+    padding: 10px 15px;
+    color: #2196f3;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover:not(.active) {
+    background-color: #e3f2fd;
+}
+
+.page-item.active .page-link {
+    background-color: #2196f3;
+    color: white;
+    pointer-events: none;
+}
+
+.page-item:first-child .page-link {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.page-item.disabled .page-link {
+    color: #b0b0b0;
+    background-color: #fff;
+    cursor: default;
+    pointer-events: none;
+}
+
+
+/* MODAL STYLES (CRUD FORM) */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    transform: scale(1);
+    transition: transform 0.3s ease-out;
+}
+
+.modal-content h2 {
+    text-align: center;
+    color: #1a237e;
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color: #2196f3;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.save-button {
+    background-color: #2196f3;
+    /* Blue for Save */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.save-button:hover {
+    background-color: #1976d2;
+}
+
+.cancel-button {
+    background-color: #bdbdbd;
+    /* Gray for Cancel */
+    color: #333;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-button:hover {
+    background-color: #9e9e9e;
+}
