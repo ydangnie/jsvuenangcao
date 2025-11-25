@@ -11,13 +11,12 @@ export default {
 </script>
 
 <style>
-/* Global styles for router host */
+/* Đảm bảo style căn chỉnh body và #app-wrapper */
 body {
     background-color: #eef2f5; 
     margin: 0;
 }
 #app-wrapper {
-    /* Đảm bảo nội dung chiếm toàn bộ chiều rộng/chiều cao */
     min-height: 100vh;
 }
 </style>

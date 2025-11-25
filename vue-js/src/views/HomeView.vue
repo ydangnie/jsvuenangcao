@@ -77,7 +77,6 @@
             <label for="sdt">SĐT:</label>
             <input id="sdt" v-model="thongTinForm.sdt" required>
           </div>
-          
           <div class="modal-actions">
             <button type="submit" class="save-button">{{ dangChinhSua ? 'Lưu Thay Đổi' : 'Tạo Mới' }}</button>
             <button type="button" @click="dongCuaSoChinhSua" class="cancel-button">Hủy</button>
@@ -85,14 +84,13 @@
         </form>
       </div>
     </div>
-    
   </div>
 </template>
 <script>
 const SAN_PHAM_MOI_TRANG = 6;
 
 export default {
-  name: 'HomeView', // Tên component đã đổi
+  name: 'HomeView', 
   data() {
     return {
       duLieu: null, 
@@ -136,9 +134,7 @@ export default {
     }
   },
   methods: {
-    // Phương thức chuyển trang chi tiết (NEW)
     chuyenTrangChiTiet(id) {
-        // Chuyển hướng đến route chi tiết sản phẩm
         this.$router.push({ 
             name: 'chi-tiet-san-pham', 
             params: { id: id } 
@@ -179,8 +175,6 @@ export default {
             moTaChiTiet: ''
         };
     },
-    // Loai bo moCuaSoChiTiet và dongCuaSoChiTiet
-    
     luuSanPham() {
         if (this.dangChinhSua) {
             const index = this.duLieu.findIndex(item => item.idsanpham === this.thongTinForm.idsanpham);
@@ -242,6 +236,111 @@ export default {
   }
 };
 </script>
-<style src="../assets/app.css" scoped>
+<style scoped>
+/* ======================== CHUNG (Giảm padding/margin) ======================== */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 20px; /* Giảm padding trên/dưới */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f7f9fc; 
+  min-height: 100vh;
+}
 
+/* ======================== HEADER & BUTTON ======================== */
+.header {
+  margin-bottom: 30px; /* Giảm margin dưới */
+  padding-bottom: 15px;
+  border-bottom: 3px solid #e0e0e0;
+}
+
+h1 {
+  font-size: 2.5em; /* Giảm kích thước chữ lớn */
+}
+
+.add-button {
+  padding: 10px 20px; /* Giảm kích thước nút */
+  font-size: 1em;
+}
+
+.add-button:hover {
+  transform: translateY(-2px);
+}
+
+/* ======================== DANH SÁCH SẢN PHẨM (Tăng mật độ) ======================== */
+.item-list {
+  /* Tối ưu hóa Grid để hiển thị nhiều cột hơn */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px; /* Giảm khoảng cách giữa các item */
+}
+
+.item-card {
+  border-radius: 10px; /* Bo tròn ít hơn */
+}
+
+.item-card:hover {
+  transform: translateY(-5px); /* Giảm hiệu ứng nổi */
+}
+
+.item-image-container {
+    height: 160px; /* Giảm chiều cao ảnh */
+}
+
+.item-info {
+    padding: 10px 15px; /* Giảm padding info */
+    flex-grow: 1;
+}
+
+.item-info h3 {
+  font-size: 1.3em; /* Giảm kích thước tiêu đề card */
+  padding-bottom: 5px;
+  margin-bottom: 8px;
+}
+
+.item-info p {
+  margin: 3px 0; /* Giảm margin giữa các dòng text */
+  font-size: 0.9em; 
+}
+
+/* ======================== ACTIONS BUTTONS ======================== */
+.item-actions {
+  gap: 8px;
+  padding: 10px 15px 15px; /* Giảm padding action bar */
+}
+
+.action-button {
+  padding: 8px 10px; /* Giảm kích thước nút */
+  font-weight: 500;
+}
+
+/* ======================== PAGINATION ======================== */
+.pagination-container {
+    margin-top: 25px; /* Giảm margin trên */
+    margin-bottom: 25px; /* Giảm margin dưới */
+}
+
+.page-link {
+  padding: 8px 14px; /* Giảm kích thước nút phân trang */
+}
+
+/* ======================== MODAL THÊM/SỬA ======================== */
+.modal-content {
+    max-width: 500px; /* Giảm max-width */
+    padding: 30px; /* Giảm padding */
+    border-radius: 10px;
+}
+
+.modal-content h2 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+}
+
+.form-group input {
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.save-button, .cancel-button {
+    padding: 10px 20px;
+}
 </style>

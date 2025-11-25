@@ -48,7 +48,6 @@ function taoDuLieuMau(count) {
 
 export default {
     name: 'ChiTietSanPham',
-    // Nhận ID sản phẩm từ route params
     props: ['id'],
     data() {
         return {
@@ -61,7 +60,6 @@ export default {
     },
     methods: {
         layChiTietSanPham(id) {
-            // Giả lập tìm kiếm sản phẩm trong data
             const duLieuGoc = taoDuLieuMau(this.TONG_SO_SAN_PHAM_MOCK);
             const idNumber = parseInt(id);
             this.sanPham = duLieuGoc.find(item => item.idsanpham === idNumber) || null;
@@ -71,7 +69,6 @@ export default {
             }
         },
         quayLai() {
-            // Quay lại trang danh sách sản phẩm
             this.$router.push({ name: 'home' });
         }
     }
@@ -79,91 +76,81 @@ export default {
 </script>
 
 <style scoped>
+/* ======================== CHUNG (Tối ưu chiều cao) ======================== */
 .detail-container-page {
   max-width: 900px;
   margin: 0 auto;
-  padding: 30px;
+  padding: 25px 20px; /* Giảm padding trên/dưới */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.back-button {
-    background: none;
-    border: 1px solid #2196f3;
-    color: #2196f3;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-bottom: 25px;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.back-button:hover {
-    background-color: #2196f3;
-    color: white;
+  /* Đảm bảo khung chứa chiếm toàn bộ chiều cao màn hình nếu nội dung không quá nhiều */
+  min-height: 100vh;
 }
 
 .detail-content-wrapper {
     background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 30px; /* Giảm padding */
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    /* Giới hạn chiều cao và cho phép cuộn nếu cần */
+    max-height: 95vh; 
+    overflow-y: auto; 
+}
+
+.back-button {
+    margin-bottom: 20px;
 }
 
 h2 {
-    color: #1a237e;
-    margin-top: 0;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 15px;
+    padding-bottom: 10px;
     margin-bottom: 20px;
-    text-align: center;
+    font-size: 2em;
 }
 
+/* ======================== BỐ CỤC DETAIL (Tối ưu Flexbox) ======================== */
 .detail-grid {
     display: flex;
-    gap: 30px;
-    flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+    gap: 20px;
+    align-items: flex-start;
 }
 
 .detail-image-box {
-    flex-basis: 45%;
+    flex-basis: 40%;
     min-width: 250px;
-    border-radius: 8px;
+    max-width: 300px;
+    /* Giới hạn chiều cao hình ảnh để không chiếm quá nhiều khung nhìn */
+    max-height: 280px; 
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.detail-image {
-    width: 100%;
-    height: auto;
-    display: block;
+    border-radius: 10px;
 }
 
 .detail-info-box {
-    flex-basis: 50%;
+    flex-basis: 60%;
     flex-grow: 1;
 }
 
 .detail-info-box p {
-    margin: 10px 0;
-    line-height: 1.6;
-}
-
-.detail-info-box strong {
-    color: #212121;
+    margin: 8px 0; /* Giảm margin */
+    font-size: 1em; /* Giảm kích thước chữ */
 }
 
 .detail-info-box hr {
     margin: 15px 0;
-    border-color: #eee;
 }
 
 .description-text {
-    background-color: #e3f2fd;
-    padding: 15px;
-    border-left: 4px solid #4caf50;
-    border-radius: 5px;
-    white-space: pre-wrap;
-    font-style: italic;
-    color: #333;
+    padding: 10px;
+    line-height: 1.5;
+}
+
+/* Điều chỉnh responsive */
+@media (max-width: 768px) {
+    .detail-grid {
+        flex-direction: column;
+    }
+    .detail-image-box {
+        max-width: 100% !important;
+        max-height: 250px; /* Giới hạn chiều cao trên mobile */
+        min-width: auto;
+    }
 }
 </style>

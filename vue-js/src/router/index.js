@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import ChiTietSanPham from '../views/ChiTietSanPham.vue' // Import component chi tiết
+import ChiTietSanPham from '../views/ChiTietSanPham.vue' // Đảm bảo tệp này tồn tại
 
 const router = createRouter({
     history: createWebHistory(
@@ -11,17 +11,14 @@ const router = createRouter({
             component: HomeView, // Trang danh sách sản phẩm
         },
         {
-            path: '/san-pham/:id', // Route chi tiết sản phẩm với tham số ID
+            path: '/san-pham/:id',
             name: 'chi-tiet-san-pham',
             component: ChiTietSanPham,
-            props: true // Cho phép truyền params là props vào component
+            props: true
         },
         {
             path: '/about',
             name: 'about',
-            // route level code-splitting
-            // this generates a separate chunk (About.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
             component: () =>
                 import ('../views/AboutView.vue'),
         },
