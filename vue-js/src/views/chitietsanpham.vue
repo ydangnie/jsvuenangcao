@@ -48,14 +48,20 @@ function taoDuLieuMau(count) {
 }
 
 export default {
-    name: 'ChiTietSanPham',
-    props: ['id'],
-    data() {
-        return {
-            sanPham: null,
-            TONG_SO_SAN_PHAM_MOCK: 66 
-        };
+   methods: {
+    // ... các hàm khác
+    
+    chuyenTrangChiTiet(id) {
+      console.log('Xem chi tiết ID:', id);
+      // Bỏ dấu // ở đầu dòng và sửa tên name thành 'ChiTietSanPham'
+      this.$router.push({ 
+        name: 'ChiTietSanPham', 
+        params: { id: id } 
+      });
     },
+
+    // ... các hàm khác
+},
     mounted() {
         this.layChiTietSanPham(this.id);
     },

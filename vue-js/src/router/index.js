@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import ChiTietSanPham from '../views/ChiTietSanPham.vue' // Đảm bảo tệp này tồn tại
+import ChiTietSanPham from '../views/chitietsanpham.vue' // Đảm bảo tệp này tồn tại
 
 const router = createRouter({
     history: createWebHistory(
