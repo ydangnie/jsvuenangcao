@@ -57,9 +57,16 @@
       <div class="modal-content">
         <h2>{{ dangChinhSua ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới' }}</h2>
         <form @submit.prevent="luuSanPham">
+          
           <div class="form-group">
-            <label for="hinhAnh">Link Hình ảnh:</label>
-            <input id="hinhAnh" v-model="thongTinForm.hinhAnh" required placeholder="URL hình ảnh (ví dụ: https://...)">
+            <label for="fileHinhAnh">{{ dangChinhSua ? 'Ảnh Mới (Chọn để thay đổi)' : 'Chọn Ảnh Sản Phẩm' }}:</label>
+            <input type="file" id="fileHinhAnh" @change="xuLyChonFile" accept="image/*" class="file-input">
+            <p v-if="thongTinForm.hinhAnh && !fileHinhAnh" class="current-image-info">
+              Đang dùng ảnh: <strong>{{ thongTinForm.hinhAnh.split('?')[0].split('/').pop() || 'Ảnh hiện tại' }}</strong>
+            </p>
+            <p v-if="fileHinhAnh" class="new-file-selected">
+              ✅ Đã chọn file: <strong>{{ fileHinhAnh.name }}</strong>
+            </p>
           </div>
           <div class="form-group">
             <label for="ao">Áo:</label>
@@ -96,6 +103,7 @@ export default {
       duLieu: null, 
       trangHienTai: 1, 
       hienThiModal: false, 
+      fileHinhAnh: null, // [NEW] Biến để giữ file object
       thongTinForm: {
         idsanpham: null,
         ao: '',
@@ -147,6 +155,17 @@ export default {
         const maxId = Math.max(...this.duLieu.map(item => item.idsanpham));
         return maxId + 1;
     },
+    // [NEW] Xử lý chọn file
+    xuLyChonFile(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            this.fileHinhAnh = file;
+        } else {
+            alert("Vui lòng chọn một file hình ảnh hợp lệ.");
+            this.fileHinhAnh = null;
+            event.target.value = null; // Reset input
+        }
+    },
     moCuaSoChinhSua(item) {
         if (item) {
             this.thongTinForm = { ...item };
@@ -162,9 +181,11 @@ export default {
             };
         }
         this.hienThiModal = true;
+        this.fileHinhAnh = null; // Reset file object khi mở modal
     },
     dongCuaSoChinhSua() {
         this.hienThiModal = false;
+        this.fileHinhAnh = null; // Reset file object khi đóng modal
         this.thongTinForm = {
             idsanpham: null,
             ao: '',
@@ -176,6 +197,18 @@ export default {
         };
     },
     luuSanPham() {
+        // [MODIFIED] Logic mô phỏng upload file
+        if (this.fileHinhAnh) {
+            // Nếu có file mới, mô phỏng upload và tạo URL mới (dùng timestamp)
+            const newMockUrl = this.taoDuLieuAnh(new Date().getTime());
+            this.thongTinForm.hinhAnh = newMockUrl;
+            console.log(`Mô phỏng: File ${this.fileHinhAnh.name} đã được upload. URL mới: ${newMockUrl}`);
+        } else if (!this.dangChinhSua) {
+             // Nếu là thêm mới mà không chọn file, gán một URL mặc định
+            this.thongTinForm.hinhAnh = this.taoDuLieuAnh(this.layIdMoi());
+        }
+        // Lưu ý: Nếu là chỉnh sửa và không có file mới, hinhAnh vẫn giữ giá trị cũ (URL)
+        
         if (this.dangChinhSua) {
             const index = this.duLieu.findIndex(item => item.idsanpham === this.thongTinForm.idsanpham);
             if (index !== -1) {
@@ -213,6 +246,10 @@ export default {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
+    // [NEW] Hàm helper tạo URL mock
+    taoDuLieuAnh(id) {
+        return `https://picsum.photos/300/200?random=${id}`;
+    },
     taoDuLieuMau(count) {
       const duLieu = [];
       for (let i = 1; i <= count; i++) {
@@ -222,7 +259,7 @@ export default {
           quan: `Quần jean ${i}`,
           diachi: `Địa chỉ ${i}, Quận ${(i % 10) + 1}, TP.HCM`,
           sdt: `0123.456.${String(i).padStart(3, '0')}`,
-          hinhAnh: `https://picsum.photos/300/200?random=${i}`,
+          hinhAnh: this.taoDuLieuAnh(i), // Sử dụng hàm helper
           moTaChiTiet: `Sản phẩm chất lượng cao, với mã SKU độc quyền: SPU${String(i).padStart(4, '0')}. Được làm từ 100% Cotton tự nhiên, mang lại cảm giác thoáng mát và thoải mái. Thích hợp cho cả dạo phố và đi làm. Bảo hành 12 tháng.`
         });
       }
@@ -236,111 +273,4 @@ export default {
   }
 };
 </script>
-<style src="../assets/app.css" scoped>
-/* ======================== CHUNG (Giảm padding/margin) ======================== */
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px 20px; /* Giảm padding trên/dưới */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f7f9fc; 
-  min-height: 100vh;
-}
-
-/* ======================== HEADER & BUTTON ======================== */
-.header {
-  margin-bottom: 30px; /* Giảm margin dưới */
-  padding-bottom: 15px;
-  border-bottom: 3px solid #e0e0e0;
-}
-
-h1 {
-  font-size: 2.5em; /* Giảm kích thước chữ lớn */
-}
-
-.add-button {
-  padding: 10px 20px; /* Giảm kích thước nút */
-  font-size: 1em;
-}
-
-.add-button:hover {
-  transform: translateY(-2px);
-}
-
-/* ======================== DANH SÁCH SẢN PHẨM (Tăng mật độ) ======================== */
-.item-list {
-  /* Tối ưu hóa Grid để hiển thị nhiều cột hơn */
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px; /* Giảm khoảng cách giữa các item */
-}
-
-.item-card {
-  border-radius: 10px; /* Bo tròn ít hơn */
-}
-
-.item-card:hover {
-  transform: translateY(-5px); /* Giảm hiệu ứng nổi */
-}
-
-.item-image-container {
-    height: 160px; /* Giảm chiều cao ảnh */
-}
-
-.item-info {
-    padding: 10px 15px; /* Giảm padding info */
-    flex-grow: 1;
-}
-
-.item-info h3 {
-  font-size: 1.3em; /* Giảm kích thước tiêu đề card */
-  padding-bottom: 5px;
-  margin-bottom: 8px;
-}
-
-.item-info p {
-  margin: 3px 0; /* Giảm margin giữa các dòng text */
-  font-size: 0.9em; 
-}
-
-/* ======================== ACTIONS BUTTONS ======================== */
-.item-actions {
-  gap: 8px;
-  padding: 10px 15px 15px; /* Giảm padding action bar */
-}
-
-.action-button {
-  padding: 8px 10px; /* Giảm kích thước nút */
-  font-weight: 500;
-}
-
-/* ======================== PAGINATION ======================== */
-.pagination-container {
-    margin-top: 25px; /* Giảm margin trên */
-    margin-bottom: 25px; /* Giảm margin dưới */
-}
-
-.page-link {
-  padding: 8px 14px; /* Giảm kích thước nút phân trang */
-}
-
-/* ======================== MODAL THÊM/SỬA ======================== */
-.modal-content {
-    max-width: 500px; /* Giảm max-width */
-    padding: 30px; /* Giảm padding */
-    border-radius: 10px;
-}
-
-.modal-content h2 {
-    font-size: 1.8em;
-    margin-bottom: 20px;
-}
-
-.form-group input {
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.save-button, .cancel-button {
-    padding: 10px 20px;
-}
-</style>
+<style src="../assets/app.css" scoped></style>
