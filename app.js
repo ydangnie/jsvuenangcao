@@ -1,140 +1,109 @@
 const express = require('express');
 const mysql = require('mysql2');
-const NodeCache = require('node-cache');
+const cors = require('cors');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
-const port = 8080;
+const port = 3000;
 
-const myCache = new NodeCache({ stdTTL: 600 });
-
-// =================================================================
-// FIX 1: THÊM MIDDLEWARE ĐỂ PHÂN TÍCH BODY CỦA REQUEST
-// =================================================================
-// Hỗ trợ parse JSON body (thường dùng trong các API request)
+// --- 1. CẤU HÌNH MIDDLEWARE ---
+app.use(cors()); // Quan trọng: Chống lỗi CORS
 app.use(express.json());
-// Hỗ trợ parse URL-encoded body (thường dùng trong form submissions)
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Public thư mục ảnh
 
-app.use(express.static('public'));
-
-// =================================================================
-// FIX 2 (KHUYẾN NGHỊ): SỬ DỤNG BIẾN MÔI TRƯỜNG CHO THÔNG TIN NHẠY CẢM
-// =================================================================
-// KHUYẾN NGHỊ: Thay vì hardcode, bạn nên dùng process.env.DB_USER, process.env.DB_PASSWORD
-const con = mysql.createConnection({
-    host: "localhost",
-    user: "root", // Vui lòng thay thế bằng process.env.DB_USER
-    password: "upredator", // Vui lòng thay thế bằng process.env.DB_PASSWORD
-    database: "testjscoban"
+// --- 2. KẾT NỐI DATABASE ---
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'upredator', // <--- ĐIỀN MẬT KHẨU MYSQL CỦA BẠN VÀO ĐÂY (nếu có)
+    database: 'shop_db'
 });
 
-con.connect(function(err) {
+db.connect(err => {
     if (err) {
-        console.error("Lỗi kết nối:", err);
+        console.error('Lỗi kết nối MySQL:', err.message);
+        console.log('Hãy kiểm tra lại mật khẩu trong file app.js hoặc đảm bảo đã chạy database script.');
         return;
     }
-    console.log("Connected to MySQL!");
+    console.log('Đã kết nối MySQL thành công!');
 });
 
-// =================================================================
-// 2. CẤU HÌNH MULTER CHO UPLOAD ẢNH
-// =================================================================
+// --- 3. CẤU HÌNH UPLOAD ẢNH ---
+if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
 
 const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        // Lưu file vào thư mục public/uploads/
-        cb(null, 'public/uploads/');
-    },
-    filename: function(req, file, cb) {
-        // Đổi tên file thành timestamp + tên gốc (để tránh trùng lặp)
-        // Ví dụ: 1638072000000-tenanh.jpg
-        cb(null, Date.now() + '-' + file.originalname.trim());
-    }
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
+const upload = multer({ storage: storage });
 
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 1024 * 1024 * 5 }, // Giới hạn 5MB
-    fileFilter: function(req, file, cb) {
-        // Kiểm tra loại file (chỉ cho phép file ảnh)
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-            return cb(new Error('Chỉ cho phép file ảnh (jpg, jpeg, png, gif, webp)!'), false);
-        }
-        cb(null, true);
-    }
-});
+// --- 4. API ROUTES (CRUD) ---
 
-
-// =================================================================
-// 3. ROUTE XỬ LÝ UPLOAD ẢNH MỚI
-// =================================================================
-
-/**
- * Endpoint này nhận một file ảnh và lưu nó vào thư mục public/uploads.
- * Tên trường trong form phải là 'productImage'.
- */
-app.post('/upload-image', upload.single('productImage'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: false, message: 'Không tìm thấy file ảnh.' });
-    }
-
-    // Đường dẫn URL của ảnh (từ góc /pubic/)
-    const imageUrl = `/uploads/${req.file.filename}`;
-
-    // Trả về đường dẫn ảnh để client lưu vào database hoặc hiển thị
-    res.json({
-        success: true,
-        message: 'Upload ảnh thành công!',
-        imageUrl: imageUrl,
-        fileName: req.file.filename
+// Lấy danh sách
+app.get('/api/products', (req, res) => {
+    db.query('SELECT * FROM products ORDER BY created_at DESC', (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
     });
 });
 
-// =================================================================
-// Các route cũ không thay đổi
-// =================================================================
-
-app.get('/', (req, res) => {
-    res.send('Hello World from Express!');
+// Lấy chi tiết 1 sản phẩm
+app.get('/api/products/:id', (req, res) => {
+    db.query('SELECT * FROM products WHERE id = ?', [req.params.id], (err, results) => {
+        if (err) return res.status(500).json(err);
+        if (results.length === 0) return res.status(404).json({ message: 'Không tìm thấy' });
+        res.json(results[0]);
+    });
 });
 
-app.get('/chitiet', (req, res) => {
-    res.redirect('/chitiet.html');
+// Thêm mới
+app.post('/api/products', upload.single('image'), (req, res) => {
+    const { name, price, description } = req.body;
+    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!name || !price) return res.status(400).json({ message: 'Thiếu tên hoặc giá' });
+
+    const sql = 'INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)';
+    db.query(sql, [name, price, description, image_url], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: 'Thêm thành công', id: result.insertId });
+    });
 });
 
-app.get('/home', (req, res) => {
-    const cacheKey = "allProducts"; // Đặt tên cho key của cache
+// Cập nhật (Sửa)
+app.put('/api/products/:id', upload.single('image'), (req, res) => {
+    const { name, price, description } = req.body;
+    const id = req.params.id;
 
-    // 1. Kiểm tra xem có cache hay không
-    const cachedData = myCache.get(cacheKey);
-
-    if (cachedData) {
-        console.log("Serving from CACHE!");
-        console.table(cachedData);
-        return res.send(cachedData);
+    let sql, params;
+    if (req.file) {
+        // Có up ảnh mới -> Thay cả link ảnh
+        const image_url = `/uploads/${req.file.filename}`;
+        sql = 'UPDATE products SET name = ?, price = ?, description = ?, image_url = ? WHERE id = ?';
+        params = [name, price, description, image_url, id];
+    } else {
+        // Không up ảnh mới -> Giữ nguyên ảnh cũ
+        sql = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
+        params = [name, price, description, id];
     }
 
-    console.log("Serving from DATABASE...");
-    con.query("SELECT idsanpham, ao, quan, diachi, sdt FROM sanpham", function(err, result, fields) {
-        if (err) {
+    db.query(sql, params, (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: 'Cập nhật thành công' });
+    });
+});
 
-            console.error("Lỗi truy vấn database:", err);
-            return res.status(500).send("Có lỗi xảy ra khi truy vấn dữ liệu.");
-        }
-
-        // Trong trường hợp sản phẩm có ảnh thật (ví dụ: 'public/uploads/1638072000000-tenanh.jpg'), 
-        // bạn sẽ cần có một cột `hinhAnh` trong database. 
-        // Sau đó thay đổi query để lấy cột đó và trả về:
-        // con.query("SELECT idsanpham, ao, quan, diachi, sdt, hinhAnh FROM sanpham", ...
-
-        myCache.set(cacheKey, result);
-
-        console.table(result);
-        res.send(result);
+// Xóa
+app.delete('/api/products/:id', (req, res) => {
+    db.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: 'Xóa thành công' });
     });
 });
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+    console.log(`Server backend đang chạy tại: http://localhost:${port}`);
 });
