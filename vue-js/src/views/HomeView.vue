@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import ProductForm from '../components/ProductForm.vue';
 import { useRouter } from 'vue-router';
 
 const products = ref([]);
