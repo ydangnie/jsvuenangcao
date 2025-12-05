@@ -10,6 +10,7 @@ const router = useRouter();
 
 const fetchData = async (p = 1) => {
   try {
+    // Gọi API lấy danh sách sản phẩm
     const res = await axios.get(`http://localhost:3000/api/san-pham?page=${p}`);
     products.value = res.data.danh_sach;
     page.value = res.data.phan_trang.trang;
@@ -17,11 +18,8 @@ const fetchData = async (p = 1) => {
   } catch (e) { console.error(e); }
 };
 
-// Thêm vào giỏ (Logic mới: kiểm tra tồn kho)
 const addToCart = (sp) => {
-  // Nếu backend chưa trả về so_luong, mặc định cho mua
   const tonKho = sp.so_luong !== undefined ? sp.so_luong : 100;
-
   if (tonKho <= 0) return alert('Sản phẩm đã hết hàng!');
 
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -46,7 +44,6 @@ onMounted(() => fetchData(1));
       <h1>AZALMAN STORE</h1>
       <div class="actions">
         <button @click="router.push('/admin')" class="btn-admin">⚙️ Trang Quản Lý</button>
-
         <button @click="router.push('/gio-hang')" class="btn-cart">🛒 Giỏ Hàng</button>
       </div>
     </div>
@@ -56,7 +53,8 @@ onMounted(() => fetchData(1));
         <div class="image-box">
           <span v-if="sp.so_luong == 0" class="badge-out">HẾT HÀNG</span>
           <span v-else class="badge-stock">Kho: {{ sp.so_luong }}</span>
-          <img :src="sp.hinh_anh ? `http://localhost:3000${sp.hinh_anh}` : 'https://via.placeholder.com/300'" />
+
+          <img :src="sp.hinh_anh ? `http://localhost:3000${sp.hinh_anh}` : 'https://placehold.co/300'" />
         </div>
         <div class="details">
           <h3>{{ sp.ten_sp }}</h3>
@@ -82,6 +80,7 @@ onMounted(() => fetchData(1));
 </template>
 
 <style scoped>
+/* Giữ nguyên CSS của bạn */
 .shop-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -125,7 +124,6 @@ onMounted(() => fetchData(1));
   color: #333;
 }
 
-/* GRID LAYOUT 3x3 */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -193,7 +191,6 @@ onMounted(() => fetchData(1));
   overflow: hidden;
 }
 
-/* Giới hạn chiều cao tên */
 .price {
   color: #e67e22;
   font-size: 18px;
@@ -231,7 +228,6 @@ onMounted(() => fetchData(1));
   cursor: not-allowed;
 }
 
-/* Phân trang */
 .pagination {
   margin-top: 40px;
   text-align: center;
@@ -258,18 +254,5 @@ onMounted(() => fetchData(1));
 
 .pagination button:hover:not(:disabled) {
   background: #eee;
-}
-.btn-admin {
-    background-color: #2c3e50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-right: 10px;
-}
-.btn-admin:hover {
-    background-color: #34495e;
 }
 </style>

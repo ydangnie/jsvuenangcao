@@ -5,19 +5,17 @@ import axios from 'axios';
 const props = defineProps({ productToEdit: Object });
 const emit = defineEmits(['saved', 'cancel']);
 
-const formData = ref({ name: '', price: '', so_luong: 100, description: '' }); // Thêm so_luong mặc định
+const formData = ref({ name: '', price: '', description: '' });
 const fileInput = ref(null);
 const previewImage = ref(null);
 const isSubmitting = ref(false);
 
-// --- 1. KHAI BÁO HÀM RESET FORM TRƯỚC (Đưa lên đây) ---
+// --- 1. KHAI BÁO HÀM RESET FORM TRƯỚC ---
 const resetForm = () => {
-  formData.value = { name: '', price: '', so_luong: 100, description: '' };
+  formData.value = { name: '', price: '', description: '' };
   fileInput.value = null;
   previewImage.value = null;
-  // Reset input file nếu có
-  const inputElement = document.getElementById('fileUpload');
-  if(inputElement) inputElement.value = "";
+  if(document.getElementById('fileUpload')) document.getElementById('fileUpload').value = "";
 };
 
 const handleFile = (e) => {
@@ -29,36 +27,31 @@ const handleFile = (e) => {
 // --- 2. SAU ĐÓ MỚI GỌI WATCH ---
 watch(() => props.productToEdit, (newVal) => {
   if (newVal) {
-    formData.value = { 
-      name: newVal.ten_sp,
-      price: newVal.gia,
-      so_luong: newVal.so_luong,
-      description: newVal.mo_ta
-    };
-    // Fix lỗi ảnh placeholder ở đây luôn nếu cần
-    previewImage.value = newVal.hinh_anh ? `http://localhost:3000${newVal.hinh_anh}` : null;
+    formData.value = { ...newVal };
+    // Sửa luôn lỗi ảnh ở đây
+    previewImage.value = newVal.image_url ? `http://localhost:3000${newVal.image_url}` : null;
   } else {
     resetForm(); // Bây giờ gọi hàm này sẽ không bị lỗi nữa
   }
 }, { immediate: true });
 
 const submitForm = async () => {
+  // ... (giữ nguyên phần submit)
   if (!formData.value.name || !formData.value.price) return alert("Nhập đủ tên và giá!");
   isSubmitting.value = true;
 
   try {
     const data = new FormData();
-    data.append('ten_sp', formData.value.name);
-    data.append('gia', formData.value.price);
-    data.append('so_luong', formData.value.so_luong);
-    data.append('mo_ta', formData.value.description || '');
-    if (fileInput.value) data.append('hinh_anh', fileInput.value);
+    data.append('name', formData.value.name);
+    data.append('price', formData.value.price);
+    data.append('description', formData.value.description || '');
+    if (fileInput.value) data.append('image', fileInput.value);
 
     if (props.productToEdit) {
-      await axios.put(`http://localhost:3000/api/san-pham/${props.productToEdit.id}`, data);
+      await axios.put(`http://localhost:3000/api/products/${props.productToEdit.id}`, data);
       alert('Đã cập nhật!');
     } else {
-      await axios.post('http://localhost:3000/api/san-pham', data);
+      await axios.post('http://localhost:3000/api/products', data);
       alert('Đã thêm mới!');
     }
     emit('saved');

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-import ProductForm from '../components/ProductForm.vue';
+import ProductForm from '@/components/ProductForm.vue';
 
 const router = useRouter();
 const activeTab = ref('products'); // 'products' hoặc 'orders'
