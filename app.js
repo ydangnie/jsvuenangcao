@@ -33,11 +33,13 @@ const upload = multer({
 // --- API SẢN PHẨM (PHÂN TRANG 9 ITEM/TRANG) ---
 ung_dung.get('/api/san-pham', (req, res) => {
     const trang = parseInt(req.query.page) || 1;
-    const gioi_han = 9; // Yêu cầu: 9 sản phẩm mỗi trang
+    const gioi_han = 6; // Yêu cầu: 9 sản phẩm mỗi trang
     const bo_qua = (trang - 1) * gioi_han;
 
     ket_noi.query('SELECT COUNT(*) as tong FROM san_pham', (err, dataCount) => {
         if (err) return res.status(500).json(err);
+
+        // Backend tự động tính lại tổng số trang dựa trên giới hạn mới (6)
         const tong_trang = Math.ceil(dataCount[0].tong / gioi_han);
 
         const sql = 'SELECT * FROM san_pham ORDER BY ngay_tao DESC LIMIT ? OFFSET ?';

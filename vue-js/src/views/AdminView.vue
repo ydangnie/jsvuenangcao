@@ -10,6 +10,7 @@ const activeTab = ref('products'); // 'products' hoặc 'orders'
 // --- LOGIC SẢN PHẨM ---
 const products = ref([]);
 const productToEdit = ref(null);
+const showForm = ref(false); // ✨ MỚI: Biến kiểm soát ẩn/hiện form
 const currentPage = ref(1);
 const totalPages = ref(1);
 
@@ -23,15 +24,30 @@ const fetchProducts = async (page = 1) => {
 };
 
 const deleteProduct = async (id) => {
-    if(confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) {
+    if (confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) {
         await axios.delete(`http://localhost:3000/api/san-pham/${id}`);
         fetchProducts(currentPage.value);
     }
 };
 
+// Hàm mở form để SỬA
 const editProduct = (p) => {
     productToEdit.value = p;
+    showForm.value = true; // ✨ Hiện form
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên đầu trang để thấy form
+};
+
+// Hàm mở form để THÊM MỚI
+const openAddForm = () => {
+    productToEdit.value = null; // Reset dữ liệu form
+    showForm.value = true;      // ✨ Hiện form
     window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Hàm đóng form
+const closeForm = () => {
+    showForm.value = false;
+    productToEdit.value = null;
 };
 
 // --- LOGIC ĐƠN HÀNG ---
@@ -55,19 +71,26 @@ onMounted(() => {
         <div class="sidebar">
             <h2 @click="router.push('/')" style="cursor: pointer;">⬅ Về Shop</h2>
             <hr>
-            <button :class="{ active: activeTab === 'products' }" @click="activeTab = 'products'">📦 Quản lý Sản phẩm</button>
-            <button :class="{ active: activeTab === 'orders' }" @click="activeTab = 'orders'">📄 Quản lý Đơn hàng</button>
+            <button :class="{ active: activeTab === 'products' }" @click="activeTab = 'products'">📦 Quản lý Sản
+                phẩm</button>
+            <button :class="{ active: activeTab === 'orders' }" @click="activeTab = 'orders'">📄 Quản lý Đơn
+                hàng</button>
         </div>
 
         <div class="content">
             <div v-if="activeTab === 'products'">
-                <h1 class="page-title">Quản Lý Sản Phẩm</h1>
-                
-                <ProductForm 
-                    :productToEdit="productToEdit" 
-                    @saved="() => { fetchProducts(currentPage); productToEdit = null; }"
-                    @cancel="productToEdit = null"
-                />
+                <div class="header-action">
+                    <h1 class="page-title">Quản Lý Sản Phẩm</h1>
+
+                    <button v-if="!showForm" @click="openAddForm" class="btn-add-new">
+                        + Thêm Sản Phẩm Mới
+                    </button>
+                </div>
+
+                <div v-if="showForm" class="form-container">
+                    <ProductForm :productToEdit="productToEdit"
+                        @saved="() => { fetchProducts(currentPage); closeForm(); }" @cancel="closeForm" />
+                </div>
 
                 <div class="table-responsive">
                     <table class="admin-table">
@@ -83,7 +106,8 @@ onMounted(() => {
                         <tbody>
                             <tr v-for="p in products" :key="p.id">
                                 <td>
-                                    <img :src="p.hinh_anh ? `http://localhost:3000${p.hinh_anh}` : 'https://placehold.co/50'" class="thumb"/>
+                                    <img :src="p.hinh_anh ? `http://localhost:3000${p.hinh_anh}` : 'https://placehold.co/50'"
+                                        class="thumb" />
                                 </td>
                                 <td>{{ p.ten_sp }}</td>
                                 <td class="text-red">{{ Number(p.gia).toLocaleString() }} đ</td>
@@ -124,7 +148,8 @@ onMounted(() => {
                                 <td class="text-red">{{ Number(hd.tong_tien).toLocaleString() }} đ</td>
                                 <td>{{ new Date(hd.ngay_tao).toLocaleString('vi-VN') }}</td>
                                 <td>
-                                    <button @click="router.push(`/hoa-don/${hd.id}`)" class="btn-sm btn-view">Chi tiết</button>
+                                    <button @click="router.push(`/hoa-don/${hd.id}`)" class="btn-sm btn-view">Chi
+                                        tiết</button>
                                 </td>
                             </tr>
                         </tbody>
@@ -136,25 +161,163 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.admin-container { display: flex; min-height: 100vh; font-family: sans-serif; background: #f4f6f8; }
-.sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.sidebar button { background: none; border: none; color: #bdc3c7; padding: 15px; text-align: left; font-size: 16px; cursor: pointer; border-radius: 5px; transition: 0.2s; }
-.sidebar button:hover, .sidebar button.active { background: #34495e; color: white; font-weight: bold; }
+/* CSS Cũ */
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: sans-serif;
+    background: #f4f6f8;
+}
 
-.content { flex: 1; padding: 30px; overflow-y: auto; }
-.page-title { margin-top: 0; margin-bottom: 20px; color: #2c3e50; }
+.sidebar {
+    width: 250px;
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-.admin-table { width: 100%; background: white; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
-.admin-table th, .admin-table td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-.admin-table th { background: #f8f9fa; font-weight: bold; color: #555; }
-.thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
-.text-red { color: #e74c3c; font-weight: bold; }
+.sidebar button {
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    padding: 15px;
+    text-align: left;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.2s;
+}
 
-.btn-sm { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; color: white; font-size: 12px; }
-.btn-edit { background: #f39c12; }
-.btn-del { background: #e74c3c; }
-.btn-view { background: #3498db; }
+.sidebar button:hover,
+.sidebar button.active {
+    background: #34495e;
+    color: white;
+    font-weight: bold;
+}
 
-.pagination { margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px; }
-.pagination button { padding: 8px 15px; cursor: pointer; }
+.content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.page-title {
+    margin: 0;
+    color: #2c3e50;
+}
+
+/* CSS Mới cho nút thêm */
+.header-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-add-new {
+    background: #27ae60;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: 0.2s;
+}
+
+.btn-add-new:hover {
+    background: #219150;
+    transform: translateY(-2px);
+}
+
+.form-container {
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s;
+}
+
+/* Table styles */
+.admin-table {
+    width: 100%;
+    background: white;
+    border-collapse: collapse;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-table th {
+    background: #f8f9fa;
+    font-weight: bold;
+    color: #555;
+}
+
+.thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.text-red {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+    color: white;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: #f39c12;
+}
+
+.btn-del {
+    background: #e74c3c;
+}
+
+.btn-view {
+    background: #3498db;
+}
+
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pagination button {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 </style>
