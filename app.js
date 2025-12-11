@@ -123,8 +123,9 @@ app.post('/api/san-pham', upload.array('hinh_anh', 5), validateSanPham, async(re
         await conn.beginTransaction();
         const { ten_sp, gia, so_luong, mo_ta } = req.body;
 
+        // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
         const [resSp] = await conn.query(
-            'INSERT INTO san_pham (ten_sp, gia, so_luong, mo_ta) VALUES (?, ?, ?, ?)', [ten_sp, gia, so_luong || 0, mo_ta]
+            'INSERT INTO san_pham (ten_sp, gia, so_luong_ton, mo_ta) VALUES (?, ?, ?, ?)', [ten_sp, gia, so_luong || 0, mo_ta]
         );
         const idSp = resSp.insertId;
 
@@ -141,6 +142,8 @@ app.post('/api/san-pham', upload.array('hinh_anh', 5), validateSanPham, async(re
         res.json({ msg: 'Thêm thành công', id: idSp });
     } catch (err) {
         await conn.rollback();
+        // Cần xóa ảnh rác nếu transaction thất bại
+        if (req.files) req.files.forEach(f => fs.unlinkSync(f.path));
         res.status(500).json({ error: err.message });
     } finally { conn.release(); }
 });
@@ -152,7 +155,8 @@ app.put('/api/san-pham/:id', upload.array('hinh_anh', 5), validateSanPham, async
         await conn.beginTransaction();
         const { ten_sp, gia, so_luong, mo_ta, cac_anh_can_xoa } = req.body;
 
-        await conn.query('UPDATE san_pham SET ten_sp=?, gia=?, so_luong=?, mo_ta=? WHERE id=?', [ten_sp, gia, so_luong, mo_ta, req.params.id]);
+        // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+        await conn.query('UPDATE san_pham SET ten_sp=?, gia=?, so_luong_ton=?, mo_ta=? WHERE id=?', [ten_sp, gia, so_luong, mo_ta, req.params.id]);
 
         // Thêm ảnh mới
         if (req.files && req.files.length > 0) {
@@ -177,6 +181,8 @@ app.put('/api/san-pham/:id', upload.array('hinh_anh', 5), validateSanPham, async
         res.json({ msg: 'Cập nhật thành công' });
     } catch (err) {
         await conn.rollback();
+        // Cần xóa ảnh rác nếu transaction thất bại
+        if (req.files) req.files.forEach(f => fs.unlinkSync(f.path));
         res.status(500).json({ error: err.message });
     } finally { conn.release(); }
 });
@@ -215,11 +221,14 @@ app.post('/api/thanh-toan', async(req, res) => {
         const { khach_hang, gio_hang, tong_tien } = req.body;
 
         for (const item of gio_hang) {
-            const [rows] = await conn.query('SELECT so_luong FROM san_pham WHERE id = ?', [item.id]);
-            if (!rows.length || rows[0].so_luong < item.so_luong_mua) {
+            // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+            const [rows] = await conn.query('SELECT so_luong_ton FROM san_pham WHERE id = ?', [item.id]);
+            // Đã sửa: Thay 'rows[0].so_luong' bằng 'rows[0].so_luong_ton'
+            if (!rows.length || rows[0].so_luong_ton < item.so_luong_mua) {
                 throw new Error(`Sản phẩm ${item.ten_sp} không đủ hàng!`);
             }
-            await conn.query('UPDATE san_pham SET so_luong = so_luong - ? WHERE id = ?', [item.so_luong_mua, item.id]);
+            // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+            await conn.query('UPDATE san_pham SET so_luong_ton = so_luong_ton - ? WHERE id = ?', [item.so_luong_mua, item.id]);
         }
 
         const [hd] = await conn.query(
@@ -247,7 +256,7 @@ app.put('/api/hoa-don/:id/trang-thai', async(req, res) => {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
-        const [hd] = await conn.query('SELECT trang_thai FROM hoa_don WHERE id = ?', [req.params.id]);
+        const [hd] = await db.query('SELECT trang_thai FROM hoa_don WHERE id = ?', [req.params.id]);
         if (!hd.length) { await conn.rollback(); return res.status(404).json({ msg: 'Không tìm thấy' }); }
 
         const oldStatus = hd[0].trang_thai;
@@ -257,13 +266,15 @@ app.put('/api/hoa-don/:id/trang-thai', async(req, res) => {
         // Hủy đơn -> Cộng kho
         if (trang_thai === 'da_huy' && oldStatus !== 'da_huy') {
             const [ct] = await conn.query('SELECT id_san_pham, so_luong_mua FROM chi_tiet_hoa_don WHERE id_hoa_don = ?', [req.params.id]);
-            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong = so_luong + ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
+            // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong_ton = so_luong_ton + ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
             hasStockChanged = true;
         }
         // Khôi phục đơn từ hủy -> Trừ kho
         else if (oldStatus === 'da_huy' && trang_thai !== 'da_huy') {
             const [ct] = await conn.query('SELECT id_san_pham, so_luong_mua FROM chi_tiet_hoa_don WHERE id_hoa_don = ?', [req.params.id]);
-            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong = so_luong - ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
+            // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong_ton = so_luong_ton - ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
             hasStockChanged = true;
         }
 
@@ -288,7 +299,8 @@ app.delete('/api/hoa-don/:id', async(req, res) => {
         let hasStockChanged = false;
         if (hd[0].trang_thai !== 'da_huy') {
             const [ct] = await conn.query('SELECT id_san_pham, so_luong_mua FROM chi_tiet_hoa_don WHERE id_hoa_don = ?', [req.params.id]);
-            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong = so_luong + ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
+            // Đã sửa: Thay 'so_luong' bằng 'so_luong_ton'
+            for (const i of ct) await conn.query('UPDATE san_pham SET so_luong_ton = so_luong_ton + ? WHERE id = ?', [i.so_luong_mua, i.id_san_pham]);
             hasStockChanged = true;
         }
 
