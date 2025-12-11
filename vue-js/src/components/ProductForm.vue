@@ -4,126 +4,93 @@ import axios from 'axios';
 
 const props = defineProps({ productToEdit: Object });
 const emit = defineEmits(['saved', 'cancel']);
+const API_URL = 'http://localhost:3000';
 
-// SỬA: Đổi tên biến state cho khớp với database để dễ quản lý
 const formData = ref({ ten_sp: '', gia: '', mo_ta: '', so_luong: 100 });
-const fileInput = ref(null);
-const previewImage = ref(null);
+const newFiles = ref([]);
+const newPreviews = ref([]);
+const existingImages = ref([]);
+const deletedImageIds = ref([]);
 const isSubmitting = ref(false);
 
 const resetForm = () => {
-  formData.value = { ten_sp: '', gia: '', mo_ta: '', so_luong: 100 };
-  fileInput.value = null;
-  previewImage.value = null;
-  if(document.getElementById('fileUpload')) document.getElementById('fileUpload').value = "";
+    formData.value = { ten_sp: '', gia: '', mo_ta: '', so_luong: 100 };
+    newFiles.value = []; newPreviews.value = []; existingImages.value = []; deletedImageIds.value = [];
+    if(document.getElementById('fileUpload')) document.getElementById('fileUpload').value = "";
 };
 
 const handleFile = (e) => {
-  const file = e.target.files[0];
-  fileInput.value = file;
-  if (file) previewImage.value = URL.createObjectURL(file);
+    const files = Array.from(e.target.files);
+    newFiles.value.push(...files);
+    newPreviews.value.push(...files.map(f => URL.createObjectURL(f)));
 };
 
-watch(() => props.productToEdit, (newVal) => {
-  if (newVal) {
-    // SỬA: Map dữ liệu từ props vào form
-    formData.value = { 
-        ten_sp: newVal.ten_sp,
-        gia: newVal.gia,
-        mo_ta: newVal.mo_ta,
-        so_luong: newVal.so_luong
-    };
-    previewImage.value = newVal.hinh_anh ? `http://localhost:3000${newVal.hinh_anh}` : null;
-  } else {
+const removeNew = (i) => { newFiles.value.splice(i, 1); URL.revokeObjectURL(newPreviews.value[i]); newPreviews.value.splice(i, 1); };
+const removeOld = (id, i) => { existingImages.value.splice(i, 1); deletedImageIds.value.push(id); };
+
+watch(() => props.productToEdit, (val) => {
     resetForm();
-  }
+    if (val) {
+        formData.value = { ten_sp: val.ten_sp, gia: val.gia, mo_ta: val.mo_ta, so_luong: val.so_luong };
+        if (val.danh_sach_anh) existingImages.value = [...val.danh_sach_anh];
+    }
 }, { immediate: true });
 
-const submitForm = async () => {
-  if (!formData.value.ten_sp || !formData.value.gia) return alert("Nhập đủ tên và giá!");
-  isSubmitting.value = true;
+const submit = async () => {
+    if (!formData.value.ten_sp || !formData.value.gia) return alert("Thiếu thông tin!");
+    isSubmitting.value = true;
+    try {
+        const data = new FormData();
+        Object.keys(formData.value).forEach(k => data.append(k, formData.value[k]));
+        newFiles.value.forEach(f => data.append('hinh_anh', f));
+        if (deletedImageIds.value.length) data.append('cac_anh_can_xoa', deletedImageIds.value.join(','));
 
-  try {
-    const data = new FormData();
-    // SỬA: Key append vào phải khớp với req.body trong app.js
-    data.append('ten_sp', formData.value.ten_sp);
-    data.append('gia', formData.value.gia);
-    data.append('so_luong', formData.value.so_luong || 0); // Thêm số lượng nếu cần
-    data.append('mo_ta', formData.value.mo_ta || '');
-    
-    // SỬA: Key file phải là 'hinh_anh' khớp với upload.single('hinh_anh')
-    if (fileInput.value) data.append('hinh_anh', fileInput.value);
-
-    // SỬA: Đường dẫn API phải là /api/san-pham
-    if (props.productToEdit) {
-      await axios.put(`http://localhost:3000/api/san-pham/${props.productToEdit.id}`, data);
-      alert('Đã cập nhật!');
-    } else {
-      await axios.post('http://localhost:3000/api/san-pham', data);
-      alert('Đã thêm mới!');
-    }
-    emit('saved');
-    resetForm();
-  } catch (error) {
-    console.error(error);
-    alert('Lỗi server: ' + (error.response?.data?.message || error.message));
-  } finally {
-    isSubmitting.value = false;
-  }
+        if (props.productToEdit) await axios.put(`${API_URL}/api/san-pham/${props.productToEdit.id}`, data);
+        else await axios.post(`${API_URL}/api/san-pham`, data);
+        
+        emit('saved'); resetForm();
+    } catch (e) { alert(e.message); } finally { isSubmitting.value = false; }
 };
 </script>
 
 <template>
   <div class="form-card">
-    <h2>{{ productToEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới' }}</h2>
-    <form @submit.prevent="submitForm" class="form-layout">
-      <div class="form-group">
-        <label>Tên sản phẩm:</label>
-        <input v-model="formData.ten_sp" type="text" placeholder="Nhập tên..." />
+    <h3>{{ productToEdit ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm' }}</h3>
+    <form @submit.prevent="submit">
+      <input v-model="formData.ten_sp" placeholder="Tên SP" class="inp" />
+      <div class="row">
+        <input v-model="formData.gia" type="number" placeholder="Giá" class="inp" />
+        <input v-model="formData.so_luong" type="number" placeholder="Kho" class="inp" />
+      </div>
+      <textarea v-model="formData.mo_ta" placeholder="Mô tả" class="inp"></textarea>
+      
+      <input type="file" multiple @change="handleFile" id="fileUpload" class="inp" />
+      <div class="preview-zone">
+          <div v-for="(img, i) in existingImages" :key="img.id" class="p-item">
+              <img :src="`${API_URL}${img.duong_dan}`" /> <span @click="removeOld(img.id, i)" class="del-x">x</span>
+          </div>
+          <div v-for="(src, i) in newPreviews" :key="i" class="p-item new">
+              <img :src="src" /> <span @click="removeNew(i)" class="del-x">x</span>
+          </div>
       </div>
 
-      <div class="form-group">
-        <label>Giá (VNĐ):</label>
-        <input v-model="formData.gia" type="number" placeholder="Nhập giá..." />
+      <div class="btns">
+          <button type="submit" :disabled="isSubmitting" class="save">Lưu</button>
+          <button type="button" @click="$emit('cancel')" class="cancel">Hủy</button>
       </div>
-
-      <div class="form-group">
-        <label>Số lượng kho:</label>
-        <input v-model="formData.so_luong" type="number" placeholder="Số lượng..." />
-      </div>
-
-      <div class="form-group">
-        <label>Mô tả:</label>
-        <textarea v-model="formData.mo_ta" rows="3"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>Hình ảnh:</label>
-        <input type="file" @change="handleFile" id="fileUpload" />
-        <img v-if="previewImage" :src="previewImage" class="preview" />
-      </div>
-
-     <div class="actions">
-        <button type="submit" :disabled="isSubmitting" class="btn-save">
-          {{ isSubmitting ? 'Đang lưu...' : 'Lưu Sản Phẩm' }}
-        </button>
-        
-        <button type="button" @click="$emit('cancel')" class="btn-cancel">
-            Hủy
-        </button>
-    </div>
-  </form>
+    </form>
   </div>
 </template>
 
 <style scoped>
-/* CSS giữ nguyên hoặc tùy chỉnh nhẹ */
-.form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.form-layout { display: grid; gap: 15px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-group input, .form-group textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-.preview { margin-top: 10px; height: 100px; object-fit: contain; border: 1px dashed #ccc; }
-.actions { display: flex; gap: 10px; margin-top: 10px; }
-.btn-save { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-.btn-cancel { background: #95a5a6; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+.form-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.inp { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; display: block; }
+.row { display: flex; gap: 10px; }
+.preview-zone { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+.p-item { width: 60px; height: 60px; position: relative; border: 1px solid #ddd; }
+.p-item img { width: 100%; height: 100%; object-fit: cover; }
+.del-x { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; text-align: center; cursor: pointer; }
+.btns { display: flex; gap: 10px; }
+.save { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; flex: 1; }
+.cancel { background: #7f8c8d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
 </style>
