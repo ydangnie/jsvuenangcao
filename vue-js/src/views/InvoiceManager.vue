@@ -67,7 +67,7 @@ onMounted(layDanhSachHoaDon);
             <h1>📦 Quản Lý Đơn Hàng</h1>
             <button class="btn-home" @click="router.push('/')">← Về trang chủ</button>
         </div>
-        
+
         <div v-if="dangTai" class="loading">Đang tải dữ liệu...</div>
 
         <div v-else class="table-responsive">
@@ -76,6 +76,7 @@ onMounted(layDanhSachHoaDon);
                     <tr>
                         <th>Mã #</th>
                         <th>Khách Hàng</th>
+                        <th>SĐT</th>
                         <th>Trạng Thái</th>
                         <th>Tổng Tiền</th>
                         <th>Ngày Tạo</th>
@@ -84,18 +85,24 @@ onMounted(layDanhSachHoaDon);
                 </thead>
                 <tbody>
                     <tr v-if="danhSachHoaDon.length === 0">
-                        <td colspan="6" class="text-center">Chưa có đơn hàng nào.</td>
+                        <td colspan="7" class="text-center">Chưa có đơn hàng nào.</td>
                     </tr>
                     <tr v-for="hd in danhSachHoaDon" :key="hd.id">
                         <td><strong>#{{ hd.id }}</strong></td>
-                        <td>{{ hd.ten_khach_hang }}</td>
+
+                        <td>{{ hd.nguoi_mua }}</td>
+
+                        <td>{{ hd.sdt }}</td>
+
                         <td>
                             <span :class="['badge', lopTrangThai(hd.trang_thai)]">
                                 {{ tenTrangThai(hd.trang_thai) }}
                             </span>
                         </td>
                         <td class="tien">{{ Number(hd.tong_tien).toLocaleString('vi-VN') }} đ</td>
-                        <td>{{ new Date(hd.ngay_tao).toLocaleString('vi-VN') }}</td>
+
+                        <td>{{ new Date(hd.thoi_diem).toLocaleString('vi-VN') }}</td>
+
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-detail" @click="router.push(`/hoa-don/${hd.id}`)">
@@ -114,38 +121,147 @@ onMounted(layDanhSachHoaDon);
 </template>
 
 <style scoped>
-.container { max-width: 1000px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', sans-serif; }
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+}
 
 /* Header */
-.header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.btn-home { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-.btn-home:hover { background-color: #5a6268; }
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-home {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-home:hover {
+    background-color: #5a6268;
+}
 
 /* Table Styles */
-.table-responsive { overflow-x: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
-.bang-hoa-don { width: 100%; border-collapse: collapse; background: white; }
-.bang-hoa-don th { background-color: #007bff; color: white; padding: 12px; text-align: left; }
-.bang-hoa-don td { padding: 12px; border-bottom: 1px solid #eee; }
-.bang-hoa-don tr:hover { background-color: #f8f9fa; }
+.table-responsive {
+    overflow-x: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.bang-hoa-don {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.bang-hoa-don th {
+    background-color: #007bff;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+.bang-hoa-don td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.bang-hoa-don tr:hover {
+    background-color: #f8f9fa;
+}
 
 /* Columns specific */
-.tien { color: #d63031; font-weight: bold; }
-.text-center { text-align: center; font-style: italic; color: #888; }
+.tien {
+    color: #d63031;
+    font-weight: bold;
+}
+
+.text-center {
+    text-align: center;
+    font-style: italic;
+    color: #888;
+}
 
 /* Badges (Trạng thái) */
-.badge { padding: 5px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; color: white; display: inline-block; min-width: 80px; text-align: center;}
-.badge-warning { background-color: #f39c12; } /* Đang xử lý - Cam */
-.badge-info { background-color: #3498db; }    /* Đang giao - Xanh dương */
-.badge-success { background-color: #2ecc71; } /* Đã giao - Xanh lá */
-.badge-danger { background-color: #e74c3c; }  /* Đã hủy - Đỏ */
-.badge-default { background-color: #95a5a6; }
+.badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: white;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+
+.badge-warning {
+    background-color: #f39c12;
+}
+
+/* Đang xử lý - Cam */
+.badge-info {
+    background-color: #3498db;
+}
+
+/* Đang giao - Xanh dương */
+.badge-success {
+    background-color: #2ecc71;
+}
+
+/* Đã giao - Xanh lá */
+.badge-danger {
+    background-color: #e74c3c;
+}
+
+/* Đã hủy - Đỏ */
+.badge-default {
+    background-color: #95a5a6;
+}
 
 /* Buttons */
-.action-buttons { display: flex; gap: 5px; }
-.btn-detail { background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.btn-detail:hover { background-color: #138496; }
-.btn-delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.btn-delete:hover { background-color: #c82333; }
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
 
-.loading { text-align: center; font-size: 1.2em; color: #666; margin-top: 50px; }
+.btn-detail {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-detail:hover {
+    background-color: #138496;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.loading {
+    text-align: center;
+    font-size: 1.2em;
+    color: #666;
+    margin-top: 50px;
+}
 </style>

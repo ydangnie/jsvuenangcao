@@ -29,9 +29,11 @@ const thanhToan = async () => {
     if (!tenKhachHang.value || !sdt.value) return alert('Vui lòng nhập tên và số điện thoại!');
 
     try {
-        // Gửi danh sách giỏ hàng về backend
+        // [FIX] Gửi tách riêng sdt và dia_chi để backend lưu vào cột tương ứng
         const data = {
-            khach_hang: `${tenKhachHang.value} (${sdt.value} - ${diaChi.value})`, // Gom thông tin lại để lưu vào cột ten_khach_hang
+            khach_hang: tenKhachHang.value, // Chỉ lưu tên người mua
+            sdt: sdt.value,                 // Lưu số điện thoại riêng
+            dia_chi: diaChi.value,          // Lưu địa chỉ riêng
             tong_tien: tongTien.value,
             gio_hang: gioHang.value 
         };
@@ -39,7 +41,7 @@ const thanhToan = async () => {
         const res = await axios.post('http://localhost:3000/api/thanh-toan', data);
         
         alert('Thanh toán thành công!');
-        localStorage.removeItem('cart'); // Xóa giỏ hàng sau khi mua
+        localStorage.removeItem('cart');
         router.push(`/hoa-don/${res.data.id_hoa_don}`);
     } catch (e) {
         console.error(e);

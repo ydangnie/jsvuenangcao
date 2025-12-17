@@ -1,52 +1,86 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import axios from 'axios';
-import { useRouter } from 'vue-router';
-import ProductForm from '@/components/ProductForm.vue';
+import { ref, onMounted, watch } from 'vue';   // Import các API của Vue 3 Composition API
+import axios from 'axios';                     // Dùng axios để gọi API
+import { useRouter } from 'vue-router';        // Dùng router để điều hướng trang
+import ProductForm from '@/components/ProductForm.vue'; // Import component form sản phẩm
 
+// URL API backend
 const API_URL = 'http://localhost:3000';
 const router = useRouter();
+
+// Trạng thái tab hiện tại (products hoặc orders)
 const activeTab = ref('products');
+
+// Biến loading để hiển thị trạng thái tải dữ liệu
 const isLoading = ref(false);
 
+// Hàm format tiền VNĐ
 const formatVND = (amount) => Number(amount).toLocaleString('vi-VN') + ' đ';
+
+// Hàm format ngày giờ theo locale VN
 const formatDate = (d) => new Date(d).toLocaleString('vi-VN');
 
-// --- SẢN PHẨM ---
-const products = ref([]);
-const productToEdit = ref(null);
-const showForm = ref(false);
-const pagination = ref({ page: 1, totalPages: 1 });
 
+// ================== QUẢN LÝ SẢN PHẨM ==================
+const products = ref([]);              // Danh sách sản phẩm
+const productToEdit = ref(null);       // Sản phẩm đang được chỉnh sửa
+const showForm = ref(false);           // Hiển thị form thêm/sửa sản phẩm
+const pagination = ref({ page: 1, totalPages: 1 }); // Phân trang sản phẩm
+
+// Hàm lấy danh sách sản phẩm từ API
 const fetchProducts = async (page = 1) => {
     try {
         const res = await axios.get(`${API_URL}/api/san-pham?page=${page}&limit=10`);
-        products.value = res.data.danh_sach;
-        pagination.value = { page: res.data.phan_trang.trang, totalPages: res.data.phan_trang.tong_trang };
-    } catch (e) { console.error(e); }
-};
-
-const deleteProduct = async (id) => {
-    if (confirm('Xóa sản phẩm này?')) {
-        await axios.delete(`${API_URL}/api/san-pham/${id}`);
-        fetchProducts(pagination.value.page);
+        products.value = res.data.danh_sach; // Gán danh sách sản phẩm
+        pagination.value = { 
+            page: res.data.phan_trang.trang, 
+            totalPages: res.data.phan_trang.tong_trang 
+        };
+    } catch (e) { 
+        console.error(e); 
     }
 };
 
-const openAddForm = () => { productToEdit.value = null; showForm.value = true; window.scrollTo(0,0); };
-const openEditForm = (p) => { productToEdit.value = p; showForm.value = true; window.scrollTo(0,0); };
-const handleSaved = () => { showForm.value = false; fetchProducts(pagination.value.page); };
+// Hàm xóa sản phẩm
+const deleteProduct = async (id) => {
+    if (confirm('Xóa sản phẩm này?')) {
+        await axios.delete(`${API_URL}/api/san-pham/${id}`);
+        fetchProducts(pagination.value.page); // Refresh lại danh sách
+    }
+};
 
-// --- ĐƠN HÀNG (NÂNG CẤP) ---
-const orders = ref([]);
-const allOrders = ref([]); // Lưu toàn bộ dữ liệu để lọc
+// Mở form thêm sản phẩm
+const openAddForm = () => { 
+    productToEdit.value = null; 
+    showForm.value = true; 
+    window.scrollTo(0,0); // Cuộn lên đầu trang
+};
 
-// 🔥 Filter states
-const searchQuery = ref('');
-const statusFilter = ref('');
-const startDate = ref('');
-const endDate = ref('');
+// Mở form chỉnh sửa sản phẩm
+const openEditForm = (p) => { 
+    productToEdit.value = p; 
+    showForm.value = true; 
+    window.scrollTo(0,0); 
+};
 
+// Sau khi lưu sản phẩm thì đóng form và refresh danh sách
+const handleSaved = () => { 
+    showForm.value = false; 
+    fetchProducts(pagination.value.page); 
+};
+
+
+// ================== QUẢN LÝ ĐƠN HÀNG ==================
+const orders = ref([]);     // Danh sách đơn hàng (sau khi lọc)
+const allOrders = ref([]);  // Toàn bộ đơn hàng (dùng để tính thống kê)
+
+// Bộ lọc đơn hàng
+const searchQuery = ref('');   // Tìm kiếm theo từ khóa
+const statusFilter = ref('');  // Lọc theo trạng thái
+const startDate = ref('');     // Ngày bắt đầu
+const endDate = ref('');       // Ngày kết thúc
+
+// Hàm lấy danh sách đơn hàng từ API (có filter)
 const fetchOrders = async () => {
     isLoading.value = true;
     try {
@@ -57,8 +91,8 @@ const fetchOrders = async () => {
         if (endDate.value) params.append('endDate', endDate.value);
 
         const res = await axios.get(`${API_URL}/api/hoa-don?${params.toString()}`);
-        orders.value = res.data;
-        allOrders.value = res.data;
+        orders.value = res.data;     // Gán dữ liệu đã lọc
+        allOrders.value = res.data;  // Lưu toàn bộ để tính thống kê
     } catch (e) { 
         console.error(e); 
     } finally { 
@@ -66,11 +100,12 @@ const fetchOrders = async () => {
     }
 };
 
-// Watch filters để tự động cập nhật
+// Tự động gọi fetchOrders khi filter thay đổi
 watch([searchQuery, statusFilter, startDate, endDate], () => {
     fetchOrders();
 }, { deep: true });
 
+// Reset bộ lọc về mặc định
 const resetFilters = () => {
     searchQuery.value = '';
     statusFilter.value = '';
@@ -78,11 +113,13 @@ const resetFilters = () => {
     endDate.value = '';
 };
 
+// Cập nhật trạng thái đơn hàng
 const updateOrderStatus = async (orderId, event) => {
     const newStatus = event.target.value;
-    if(!confirm(`Cập nhật trạng thái thành "${getStatusLabel(newStatus)}"? ${newStatus == 2 ? '(Hủy đơn sẽ hoàn kho)' : ''}`)) {
-        await fetchOrders(); 
-        return;
+    // Xác nhận trước khi cập nhật
+    if(!confirm(`Cập nhật trạng thái thành "${getStatusLabel(newStatus)}"? ${newStatus == 2 ? '(Hủy đơn sẽ hoàn kho)' : ''}`)) { 
+        await fetchOrders();  
+        return; 
     }
     try {
         await axios.put(`${API_URL}/api/hoa-don/${orderId}/trang-thai`, { trang_thai: newStatus });
@@ -93,16 +130,18 @@ const updateOrderStatus = async (orderId, event) => {
     }
 };
 
+// Hàm trả về class CSS theo trạng thái đơn hàng
 const getStatusClass = (s) => {
     const map = {
-        0: 'st-warning',
-        1: 'st-info',
-        2: 'st-danger',
-        3: 'st-success'
+        0: 'st-warning', // Đang xử lý
+        1: 'st-info',    // Đang giao
+        2: 'st-danger',  // Đã hủy
+        3: 'st-success'  // Đã giao
     };
     return map[s] || '';
 };
 
+// Hàm trả về label trạng thái đơn hàng
 const getStatusLabel = (s) => {
     const map = {
         0: 'Đang xử lý',
@@ -113,16 +152,18 @@ const getStatusLabel = (s) => {
     return map[s] || 'Không rõ';
 };
 
-// Tính toán thống kê
+
+// ================== THỐNG KÊ ĐƠN HÀNG ==================
 const orderStats = ref({
-    total: 0,
-    pending: 0,
-    shipping: 0,
-    completed: 0,
-    cancelled: 0,
-    revenue: 0
+    total: 0,      // Tổng số đơn
+    pending: 0,    // Đang xử lý
+    shipping: 0,   // Đang giao
+    completed: 0,  // Đã giao
+    cancelled: 0,  // Đã hủy
+    revenue: 0     // Doanh thu (chỉ tính đơn đã giao)
 });
 
+// Hàm tính toán thống kê từ allOrders
 const calculateStats = () => {
     const stats = {
         total: allOrders.value.length,
@@ -139,6 +180,7 @@ const calculateStats = () => {
         else if (order.trang_thai === 2) stats.cancelled++;
         else if (order.trang_thai === 3) stats.completed++;
 
+        // Nếu đơn đã giao thì cộng doanh thu
         if (order.trang_thai === 3) {
             stats.revenue += Number(order.tong_tien);
         }
@@ -147,8 +189,10 @@ const calculateStats = () => {
     orderStats.value = stats;
 };
 
+// Theo dõi allOrders để tự động tính lại thống kê
 watch(allOrders, calculateStats, { immediate: true, deep: true });
 
+// Khi component mount thì gọi API lấy dữ liệu sản phẩm và đơn hàng
 onMounted(() => { 
     fetchProducts(); 
     fetchOrders(); 
